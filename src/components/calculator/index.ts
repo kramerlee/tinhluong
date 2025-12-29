@@ -1,0 +1,11 @@
+export { default as CalculatorHeader } from './CalculatorHeader.vue'
+export { default as TaxNotice } from './TaxNotice.vue'
+export { default as IncomeInputForm } from './IncomeInputForm.vue'
+export { default as InsuranceCard } from './InsuranceCard.vue'
+export { default as DeductionsCard } from './DeductionsCard.vue'
+export { default as TaxCalculationCard } from './TaxCalculationCard.vue'
+export { default as SalarySummary } from './SalarySummary.vue'
+export { default as ComparisonCard } from './ComparisonCard.vue'
+export { default as ReferenceInfo } from './ReferenceInfo.vue'
+export { default as CalculatorFooter } from './CalculatorFooter.vue'
+
