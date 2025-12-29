@@ -49,9 +49,30 @@ function formatDiff(value: number): string {
         Tính Lương NET
       </h1>
       <p class="subtitle">Áp dụng mức giảm trừ gia cảnh 2026</p>
+      <div v-if="store.isNewTaxBrackets" class="tax-badge new-tax">
+        <i class="pi pi-bolt"></i>
+        Biểu thuế mới 5 bậc (từ 01/07/2026)
+      </div>
+      <div v-else class="tax-badge old-tax">
+        <i class="pi pi-calendar"></i>
+        Biểu thuế 7 bậc (trước 01/07/2026)
+      </div>
     </header>
 
     <main class="main-content">
+      <!-- New Tax Brackets Notice -->
+      <Card v-if="store.isNewTaxBrackets" class="notice-card new-tax-notice">
+        <template #content>
+          <div class="notice-content">
+            <i class="pi pi-star-fill"></i>
+            <div>
+              <strong>Áp dụng biểu thuế mới từ 01/07/2026</strong>
+              <p>Giảm từ 7 bậc xuống 5 bậc theo Nghị quyết 954/2025/UBTVQH15</p>
+            </div>
+          </div>
+        </template>
+      </Card>
+
       <!-- Input Section -->
       <Card class="input-card">
         <template #title>
@@ -116,7 +137,7 @@ function formatDiff(value: number): string {
             />
             <label for="comparison" class="checkbox-label">
               <i class="pi pi-chart-bar"></i>
-              So sánh với mức giảm trừ trước 2026
+              So sánh với trước 2026
             </label>
           </div>
 
@@ -195,6 +216,8 @@ function formatDiff(value: number): string {
           <div class="card-title">
             <i class="pi pi-percentage"></i>
             Tính thuế TNCN
+            <span v-if="store.isNewTaxBrackets" class="title-badge">5 bậc mới</span>
+            <span v-else class="title-badge old">7 bậc</span>
           </div>
         </template>
         <template #content>
@@ -210,7 +233,10 @@ function formatDiff(value: number): string {
           <Divider />
 
           <div class="tax-table" v-if="store.taxDetails.length > 0">
-            <h4>Chi tiết thuế theo bậc</h4>
+            <h4>
+              Chi tiết thuế theo bậc
+              <span v-if="store.isNewTaxBrackets" class="bracket-info">(Biểu thuế mới)</span>
+            </h4>
             <DataTable :value="store.taxDetails" size="small" stripedRows>
               <Column field="bracket" header="Bậc thuế"></Column>
               <Column field="rate" header="Thuế suất"></Column>
@@ -269,7 +295,7 @@ function formatDiff(value: number): string {
         <template #title>
           <div class="card-title comparison-title">
             <i class="pi pi-chart-bar"></i>
-            So sánh với mức giảm trừ trước 2026
+            So sánh với trước 2026
           </div>
         </template>
         <template #content>
@@ -279,7 +305,7 @@ function formatDiff(value: number): string {
                 <tr>
                   <th>Khoản mục</th>
                   <th>Trước 2026</th>
-                  <th>Năm 2026</th>
+                  <th>{{ store.isNewTaxBrackets ? 'Từ 01/07/2026' : 'Từ 01/01/2026' }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -322,7 +348,7 @@ function formatDiff(value: number): string {
           <div class="comparison-summary">
             <h4>
               <i class="pi pi-arrow-up"></i>
-              Lợi ích khi áp dụng mức giảm trừ 2026
+              Lợi ích so với trước 2026
             </h4>
             <div class="benefit-grid">
               <div class="benefit-item">
@@ -358,11 +384,11 @@ function formatDiff(value: number): string {
           <ul class="info-list">
             <li>
               <strong>Mức giảm trừ bản thân:</strong> {{ formatVND(store.PERSONAL_DEDUCTION) }}/tháng
-              <span class="tag new">2026</span>
+              <span class="tag new">01/01/2026</span>
             </li>
             <li>
               <strong>Mức giảm trừ người phụ thuộc:</strong> {{ formatVND(store.DEPENDENT_DEDUCTION) }}/người/tháng
-              <span class="tag new">2026</span>
+              <span class="tag new">01/01/2026</span>
             </li>
             <li v-if="store.showComparison">
               <strong>Mức giảm trừ bản thân (cũ):</strong> {{ formatVND(store.PERSONAL_DEDUCTION_PRE2026) }}/tháng
@@ -373,12 +399,54 @@ function formatDiff(value: number): string {
               <span class="tag old">Trước 2026</span>
             </li>
             <li>
-              <strong>Bậc thuế TNCN:</strong> Giữ nguyên theo quy định trước 2026
+              <strong>Bậc thuế TNCN đang áp dụng:</strong>
+              <span v-if="store.isNewTaxBrackets">
+                5 bậc (5%, 10%, 20%, 30%, 35%)
+                <span class="tag new">01/07/2026</span>
+              </span>
+              <span v-else>
+                7 bậc (5%, 10%, 15%, 20%, 25%, 30%, 35%)
+                <span class="tag old">Trước 01/07/2026</span>
+              </span>
             </li>
             <li>
-              <strong>Căn cứ:</strong> Nghị quyết 110/2025/UBTVQH15 (có hiệu lực từ 01/01/2026)
+              <strong>Căn cứ giảm trừ:</strong> Nghị quyết 110/2025/UBTVQH15 (từ 01/01/2026)
+            </li>
+            <li v-if="store.isNewTaxBrackets">
+              <strong>Căn cứ bậc thuế:</strong> Nghị quyết 954/2025/UBTVQH15 (từ 01/07/2026)
             </li>
           </ul>
+
+          <!-- Tax Brackets Reference -->
+          <Divider />
+          <div class="brackets-reference">
+            <h4>Biểu thuế TNCN {{ store.isNewTaxBrackets ? 'mới (từ 01/07/2026)' : '(trước 01/07/2026)' }}</h4>
+            <table class="brackets-table">
+              <thead>
+                <tr>
+                  <th>Bậc</th>
+                  <th>Thu nhập chịu thuế/tháng</th>
+                  <th>Thuế suất</th>
+                </tr>
+              </thead>
+              <tbody v-if="store.isNewTaxBrackets">
+                <tr><td>1</td><td>Đến 10 triệu</td><td>5%</td></tr>
+                <tr><td>2</td><td>10 - 30 triệu</td><td>10%</td></tr>
+                <tr><td>3</td><td>30 - 60 triệu</td><td>20%</td></tr>
+                <tr><td>4</td><td>60 - 100 triệu</td><td>30%</td></tr>
+                <tr><td>5</td><td>Trên 100 triệu</td><td>35%</td></tr>
+              </tbody>
+              <tbody v-else>
+                <tr><td>1</td><td>Đến 5 triệu</td><td>5%</td></tr>
+                <tr><td>2</td><td>5 - 10 triệu</td><td>10%</td></tr>
+                <tr><td>3</td><td>10 - 18 triệu</td><td>15%</td></tr>
+                <tr><td>4</td><td>18 - 32 triệu</td><td>20%</td></tr>
+                <tr><td>5</td><td>32 - 52 triệu</td><td>25%</td></tr>
+                <tr><td>6</td><td>52 - 80 triệu</td><td>30%</td></tr>
+                <tr><td>7</td><td>Trên 80 triệu</td><td>35%</td></tr>
+              </tbody>
+            </table>
+          </div>
         </template>
       </Card>
     </main>
@@ -419,6 +487,27 @@ function formatDiff(value: number): string {
   font-size: 0.875rem;
 }
 
+.tax-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tax-badge.new-tax {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.tax-badge.old-tax {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
 .main-content {
   flex: 1;
   padding: 1rem;
@@ -430,6 +519,35 @@ function formatDiff(value: number): string {
   gap: 1rem;
 }
 
+.notice-card.new-tax-notice {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 2px solid #10b981;
+}
+
+.notice-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.notice-content i {
+  color: #059669;
+  font-size: 1.25rem;
+  margin-top: 0.125rem;
+}
+
+.notice-content strong {
+  color: #065f46;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.notice-content p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #047857;
+}
+
 .card-title {
   display: flex;
   align-items: center;
@@ -437,6 +555,21 @@ function formatDiff(value: number): string {
   font-size: 1rem;
   font-weight: 600;
   color: #1e3a5f;
+}
+
+.title-badge {
+  font-size: 0.625rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background: #dcfce7;
+  color: #166534;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.title-badge.old {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .form-group {
@@ -528,6 +661,15 @@ function formatDiff(value: number): string {
   margin: 0 0 0.75rem;
   font-size: 0.875rem;
   color: #4b5563;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bracket-info {
+  font-size: 0.75rem;
+  color: #059669;
+  font-weight: 500;
 }
 
 .no-tax {
@@ -740,6 +882,36 @@ function formatDiff(value: number): string {
   color: #92400e;
 }
 
+.brackets-reference h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: #1e3a5f;
+}
+
+.brackets-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.brackets-table th,
+.brackets-table td {
+  padding: 0.5rem;
+  text-align: center;
+  border: 1px solid #e5e7eb;
+}
+
+.brackets-table th {
+  background: #e0f2fe;
+  font-weight: 600;
+  color: #0369a1;
+}
+
+.brackets-table td:first-child {
+  font-weight: 600;
+  background: #f0f9ff;
+}
+
 .footer {
   text-align: center;
   padding: 1rem;
@@ -794,6 +966,15 @@ function formatDiff(value: number): string {
 
   .checkbox-label {
     font-size: 0.875rem;
+  }
+
+  .brackets-table {
+    font-size: 0.75rem;
+  }
+
+  .brackets-table th,
+  .brackets-table td {
+    padding: 0.375rem;
   }
 }
 </style>

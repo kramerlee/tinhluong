@@ -60,8 +60,8 @@ export const useSalaryStore = defineStore('salary', () => {
   const BASE_SALARY = 2340000 // Lương cơ sở 2024
   const MAX_INSURANCE_SALARY = BASE_SALARY * 20 // Mức trần đóng BHXH
 
-  // Pre-2026 Tax brackets (unchanged)
-  const TAX_BRACKETS: TaxBracket[] = [
+  // Pre-July 2026 Tax brackets (7 brackets)
+  const TAX_BRACKETS_OLD: TaxBracket[] = [
     { limit: 5000000, rate: 0.05 },
     { limit: 10000000, rate: 0.10 },
     { limit: 18000000, rate: 0.15 },
@@ -70,6 +70,29 @@ export const useSalaryStore = defineStore('salary', () => {
     { limit: 80000000, rate: 0.30 },
     { limit: Infinity, rate: 0.35 }
   ]
+
+  // From July 1, 2026 Tax brackets (5 brackets - Nghị quyết 954/2025/UBTVQH15)
+  const TAX_BRACKETS_NEW: TaxBracket[] = [
+    { limit: 10000000, rate: 0.05 },
+    { limit: 30000000, rate: 0.10 },
+    { limit: 60000000, rate: 0.20 },
+    { limit: 100000000, rate: 0.30 },
+    { limit: Infinity, rate: 0.35 }
+  ]
+
+  // Date for new tax brackets (July 1, 2026)
+  const NEW_TAX_EFFECTIVE_DATE = new Date('2026-07-01')
+
+  // Check if new tax brackets should be applied
+  const isNewTaxBrackets = computed<boolean>(() => {
+    const today = new Date()
+    return today >= NEW_TAX_EFFECTIVE_DATE
+  })
+
+  // Get current applicable tax brackets
+  const TAX_BRACKETS = computed<TaxBracket[]>(() => {
+    return isNewTaxBrackets.value ? TAX_BRACKETS_NEW : TAX_BRACKETS_OLD
+  })
 
   // Calculate insurance salary (capped)
   const insuranceSalary = computed<number>(() => {
@@ -119,13 +142,13 @@ export const useSalaryStore = defineStore('salary', () => {
     return Math.max(0, incomeBeforeTax.value - totalDeductions.value)
   })
 
-  // Helper function to calculate progressive tax
-  function calculateTax(taxableAmount: number): number {
+  // Helper function to calculate progressive tax with specific brackets
+  function calculateTaxWithBrackets(taxableAmount: number, brackets: TaxBracket[]): number {
     let income = taxableAmount
     let tax = 0
     let previousLimit = 0
 
-    for (const bracket of TAX_BRACKETS) {
+    for (const bracket of brackets) {
       if (income <= 0) break
 
       const taxableInBracket = Math.min(income, bracket.limit - previousLimit)
@@ -137,9 +160,9 @@ export const useSalaryStore = defineStore('salary', () => {
     return Math.round(tax)
   }
 
-  // Calculate progressive tax
+  // Calculate progressive tax using current applicable brackets
   const taxAmount = computed<number>(() => {
-    return calculateTax(taxableIncome.value)
+    return calculateTaxWithBrackets(taxableIncome.value, TAX_BRACKETS.value)
   })
 
   // Format currency
@@ -147,13 +170,13 @@ export const useSalaryStore = defineStore('salary', () => {
     return new Intl.NumberFormat('vi-VN').format(value)
   }
 
-  // Tax details by bracket
-  const taxDetails = computed<TaxDetail[]>(() => {
-    let income = taxableIncome.value
+  // Get tax details for specific brackets
+  function getTaxDetailsForBrackets(taxableAmount: number, brackets: TaxBracket[]): TaxDetail[] {
+    let income = taxableAmount
     let previousLimit = 0
     const details: TaxDetail[] = []
 
-    for (const bracket of TAX_BRACKETS) {
+    for (const bracket of brackets) {
       if (income <= 0) break
 
       const taxableInBracket = Math.min(income, bracket.limit - previousLimit)
@@ -173,6 +196,11 @@ export const useSalaryStore = defineStore('salary', () => {
     }
 
     return details
+  }
+
+  // Tax details by bracket
+  const taxDetails = computed<TaxDetail[]>(() => {
+    return getTaxDetailsForBrackets(taxableIncome.value, TAX_BRACKETS.value)
   })
 
   // Net salary
@@ -180,17 +208,17 @@ export const useSalaryStore = defineStore('salary', () => {
     return grossSalary.value - totalInsurance.value - taxAmount.value
   })
 
-  // Comparison with pre-2026 rates
+  // Comparison with pre-2026 rates (deduction + old tax brackets)
   const comparison = computed<ComparisonResult>(() => {
-    // Pre-2026 calculations
+    // Pre-2026 calculations (old deductions + old tax brackets)
     const pre2026PersonalDeduction = PERSONAL_DEDUCTION_PRE2026
     const pre2026DependentsDeduction = dependents.value * DEPENDENT_DEDUCTION_PRE2026
     const pre2026TotalDeductions = pre2026PersonalDeduction + pre2026DependentsDeduction + otherDeductions.value
     const pre2026TaxableIncome = Math.max(0, incomeBeforeTax.value - pre2026TotalDeductions)
-    const pre2026TaxAmount = calculateTax(pre2026TaxableIncome)
+    const pre2026TaxAmount = calculateTaxWithBrackets(pre2026TaxableIncome, TAX_BRACKETS_OLD)
     const pre2026NetSalary = grossSalary.value - totalInsurance.value - pre2026TaxAmount
 
-    // Current (2026) calculations
+    // Current calculations (new deductions + current tax brackets)
     const currentPersonalDeduction = PERSONAL_DEDUCTION
     const currentDependentsDeduction = dependents.value * DEPENDENT_DEDUCTION
     const currentTotalDeductions = currentPersonalDeduction + currentDependentsDeduction + otherDeductions.value
@@ -266,9 +294,12 @@ export const useSalaryStore = defineStore('salary', () => {
     DEPENDENT_DEDUCTION,
     PERSONAL_DEDUCTION_PRE2026,
     DEPENDENT_DEDUCTION_PRE2026,
-    TAX_BRACKETS,
+    TAX_BRACKETS_OLD,
+    TAX_BRACKETS_NEW,
 
     // Computed
+    isNewTaxBrackets,
+    TAX_BRACKETS,
     insuranceSalary,
     socialInsurance,
     healthInsurance,
