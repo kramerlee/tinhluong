@@ -64,7 +64,7 @@ useHead({
     { rel: 'canonical', href: siteUrl },
     { rel: 'alternate', hreflang: 'vi', href: siteUrl },
     { rel: 'alternate', hreflang: 'x-default', href: siteUrl },
-    { rel: 'icon', type: 'image/svg+xml', href: '/tinhluong/vite.svg' }
+    { rel: 'icon', type: 'image/svg+xml', href: '/tinhluong2026/vite.svg' }
   ],
   script: [
     {

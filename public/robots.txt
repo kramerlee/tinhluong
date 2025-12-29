@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://kramerlee.github.io/tinhluong/sitemap.xml
+Sitemap: https://kramerlee.github.io/tinhluong2026/sitemap.xml
 
